@@ -4,11 +4,11 @@ let SerialPort = require("serialport"),
     util       = require("util"),
     events     = require('events');
 
-function DevialetExpert() {
+function RotelAmp() {
     this.seq = 0;
 }
 
-util.inherits(DevialetExpert, events.EventEmitter);
+util.inherits(RotelAmp, events.EventEmitter);
 
 let _processw = function() {
     if (!this._port) return;
@@ -50,12 +50,12 @@ let _send = function(name, val, cb) {
         this._qr.push({ cb: cb, name: name, ack: false });
 };
 
-DevialetExpert.prototype.set_volume          = function(val, cb) { _send.call(this, "volume",          Number(val), cb); };
-DevialetExpert.prototype.set_power           = function(val, cb) { _send.call(this, "power",           val,  cb); };
-DevialetExpert.prototype.set_source          = function(val, cb) { _send.call(this, "source",          val, cb); };
-DevialetExpert.prototype.set_mute            = function(val, cb) { _send.call(this, "mute",            val,  cb); };
+RotelAmp.prototype.set_volume          = function(val, cb) { _send.call(this, "volume",          Number(val), cb); };
+RotelAmp.prototype.set_power           = function(val, cb) { _send.call(this, "power",           val,  cb); };
+RotelAmp.prototype.set_source          = function(val, cb) { _send.call(this, "source",          val, cb); };
+RotelAmp.prototype.set_mute            = function(val, cb) { _send.call(this, "mute",            val,  cb); };
 
-DevialetExpert.prototype.init = function(port, baud, cb) {
+RotelAmp.prototype.init = function(port, baud, cb) {
     let self = this;
 
     this._qw = [];
@@ -135,7 +135,7 @@ DevialetExpert.prototype.init = function(port, baud, cb) {
     this._port.on('disconnect', ()  => { this._port.close(() => { this._port = undefined; if (cb) { var cb2 = cb; cb = undefined; cb2('disconnect'); } }) });
 };
 
-DevialetExpert.prototype.start = function(port, baud) {
+RotelAmp.prototype.start = function(port, baud) {
     this.seq++;
 
     let closecb = (why) => {
@@ -158,10 +158,10 @@ DevialetExpert.prototype.start = function(port, baud) {
     }
 };
 
-DevialetExpert.prototype.stop = function() {
+RotelAmp.prototype.stop = function() {
     this.seq++;
     if (this._port)
         this._port.close(() => {});
 };
 
-exports = module.exports = DevialetExpert;
+exports = module.exports = RotelAmp;

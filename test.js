@@ -1,6 +1,6 @@
-var DevialetExpert = require(".");
+var RotelAmp = require(".");
 
-var d = new DevialetExpert();
+var d = new RotelAmp();
 
 d.on('status', (s,e) => {
     console.log(s,e);

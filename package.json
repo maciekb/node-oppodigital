@@ -1,9 +1,9 @@
 {
   "name": "node-rotel",
   "version": "1.0.0",
-  "description": "Rotel Amp Line Device Control via RS232",
+  "description": "Rotel Amp Device Control via RS232",
   "main": "lib.js",
-  "author": "Christopher Rieke (based on Devialet by RoonLabs).",
+  "author": "Christopher Rieke (based on Devialet Expert extension by RoonLabs).",
   "license": "Apache-2.0",
   "dependencies": {
     "serialport": "^4.0.1"

@@ -8,8 +8,8 @@ Configure your Expert:
 Initialization:
 
 ```javascript
-var DevialetExpert = require("node-devialet-expert");
-var d = new DevialetExpert();
+var RotelAmp = require("node-rotel");
+var d = new RotelAmp();
 ```
 
 Listening to events:
@@ -33,14 +33,14 @@ d.on('changed', function(property, value) { });
 * `'source'`
 * `'mute'`
 
-Starting/Stopping the connection to the Devialet Expert device:
+Starting/Stopping the connection to your Rotel Amp:
 
 ```javascript
 d.start(port, baud);
 ```
 
 * `port` should be like `'/dev/cu.usbserial'` or something similar on MacOS or Linux, or `'COM3'` on Windows
-* `baud` should be like `115200`, or whatever you configured your Devialet to be (see above)
+* `baud` should be like `115200`, or whatever you configured your Rotel to be (see above)
 
 
 
