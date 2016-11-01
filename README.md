@@ -1,12 +1,9 @@
-# Devialet Expert Line Device Control via RS232
+# Rotel Amp Line Device Control via RS232
 
 Configure your Expert:
 
 * Link speed: 115200
-* Identifier: Devialet
-* Mode -> Command Acknowledge = TRUE
-* Mode -> Auto Cchange notification = TRUE
-* Mode -> Echo chaining = FALSE
+* Identifier: Rotel
 
 Initialization:
 
@@ -35,11 +32,6 @@ d.on('changed', function(property, value) { });
 * `'volume'`
 * `'source'`
 * `'mute'`
-* `'phase'`
-* `'preout'`
-* `'riaa'`
-* `'subsonic_filter'`
-* `'subwoofer'`
 
 Starting/Stopping the connection to the Devialet Expert device:
 

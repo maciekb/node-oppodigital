@@ -16,7 +16,7 @@ let _processw = function() {
     if (this._qw.length == 0) return;
 
     this._woutstanding = true;
-    console.log("DEVIALET RS232: Writing", this._qw[0]);
+    console.log("Rotel RS232: Writing", this._qw[0]);
 
     this._port.write(this._qw[0],
                     (err) => {
@@ -27,26 +27,33 @@ let _processw = function() {
                     });
 }
 let _query = function(name, cb) {
-    this._qw.push("[Devialet>" + name + "=?]\r\n");
+	var nicename = name;
+	if (name == "source"){var nicename = "get_current_source"};
+	if (name == "power"){var nicename = "get_current_power"};
+	if (name == "volume"){var nicename = "get_volume"};
+	if (name == "mute"){var nicename = "get_mute_status"};
+    this._qw.push(nicename + "!");
     if (cb) this._qr.push({ cb: cb, name: name });
     _processw.call(this);
 };
 
 let _send = function(name, val, cb) {
-    this._qw.push("[Devialet>" + name + "=" + val + "]\r\n");
+	var nicename = name;
+	var seperator = "_";
+    if (nicename == "source" && val.length > 3 ) {nicename = ""; seperator = "";};
+    if (val == "standby" ) {val = "off";};
+    if (name == "mute" && val == "toggle" ) {val = ""; seperator = "";};
+    this._qw.push(nicename + seperator + val + "!");
     _processw.call(this);
+    console.log("Callback: ",cb);
     if (cb)
-        this._qr.push({ cb: cb, name: name, ack: true });
+        this._qr.push({ cb: cb, name: name, ack: false });
 };
 
-DevialetExpert.prototype.set_volume          = function(val, cb) { _send.call(this, "VOLUME",          Number(val), cb); };
-DevialetExpert.prototype.set_power           = function(val, cb) { _send.call(this, "POWER",           val == "1",  cb); };
-DevialetExpert.prototype.set_source          = function(val, cb) { _send.call(this, "SOURCE",          val,         cb); };
-DevialetExpert.prototype.set_mute            = function(val, cb) { _send.call(this, "MUTE",            val == "1",  cb); };
-DevialetExpert.prototype.set_phase           = function(val, cb) { _send.call(this, "PHASE",           val == "1",  cb); };
-DevialetExpert.prototype.set_preout          = function(val, cb) { _send.call(this, "PREOUT",          val == "1",  cb); };
-DevialetExpert.prototype.set_subsonic_filter = function(val, cb) { _send.call(this, "SUBSONIC_FILTER", val == "1",  cb); };
-DevialetExpert.prototype.set_subwoofer       = function(val, cb) { _send.call(this, "SUBWOOFER",       val == "1",  cb); };
+DevialetExpert.prototype.set_volume          = function(val, cb) { _send.call(this, "volume",          Number(val), cb); };
+DevialetExpert.prototype.set_power           = function(val, cb) { _send.call(this, "power",           val,  cb); };
+DevialetExpert.prototype.set_source          = function(val, cb) { _send.call(this, "source",          val, cb); };
+DevialetExpert.prototype.set_mute            = function(val, cb) { _send.call(this, "mute",            val,  cb); };
 
 DevialetExpert.prototype.init = function(port, baud, cb) {
     let self = this;
@@ -59,14 +66,15 @@ DevialetExpert.prototype.init = function(port, baud, cb) {
 
     this._port = new SerialPort(port, {
         baudRate: baud,
-        parser:   SerialPort.parsers.readline("\r\n")
+        parser:   SerialPort.parsers.readline("!")
     });
 
     this._port.on('data', data => {
-        console.log("DEVIALET RS232: read", data);
-        var re = /\[Devialet>([^:=]+)[:=]([^\]]+)\]/.exec(data);
+        if (data.substr(0,3) == "00:") {data = data.substr(3)};
+        console.log("Rotel RS232: read", data);
+        var re = /([^:=]+)[:=]([^\]]+)/.exec(data);
         if (!re) {
-            console.error("DEVIALET RS232: unexpected data from serial port %s: %s", port, data);
+            console.error("Rotel RS232: unexpected data from serial port %s: %s", port, data);
             return;
         }
 
@@ -76,15 +84,11 @@ DevialetExpert.prototype.init = function(port, baud, cb) {
             val:  re[2]
         };
 
-        if (d.val != "ACK") {
-            if      (d.prop == "volume"         ) d.val = Number(d.val);
-            else if (d.prop == "power"          ) d.val = d.val == "1" ;
-            else if (d.prop == "start"          ) d.val = d.val == "1" ;
-            else if (d.prop == "mute"           ) d.val = d.val == "1" ;
-            else if (d.prop == "phase"          ) d.val = d.val == "1" ;
-            else if (d.prop == "preout"         ) d.val = d.val == "1" ;
-            else if (d.prop == "subsonic_filter") d.val = d.val == "1" ;
-            else if (d.prop == "subwoofer"      ) d.val = d.val == "1" ;
+        if (d.val != "standby") {
+            if      (d.prop == "volume"         ) d.val = Number(d.val) ;
+            else if (d.prop == "power"          ) d.val = d.val == "on" ;
+            else if (d.prop == "mute"           ) d.val = d.val == "on" ;
+            else if (d.prop == "freq"           ) d.val = Number(d.val) ;
 
             this.properties[d.prop] = d.val;
             this.emit("changed", d.prop, this.properties[d.prop]);
@@ -99,31 +103,27 @@ DevialetExpert.prototype.init = function(port, baud, cb) {
         }
     });
 
+
     let opened = function() {
         if (!self._port) return;
-        console.log(self.properties);
-        if (self.properties.power && !self.properties.start) {
-            _query.call(self, "VOLUME", (err, val) => {
-                _query.call(self, "SOURCE", (err, val) => {
-                    _query.call(self, "MUTE", valal => {
-                        _query.call(self, "PHASE", vall => {
-                            _query.call(self, "PREOUT", (err, val) => {
-                                _query.call(self, "SUBSONIC_FILTER", (err, val) => {
-                                    _query.call(self, "SUBWOOFER", (err, val) => {
-                                        self.emit('status', "connected");
-                                    });
-                                });
-                            });
-                        });
+
+        if (self.properties.power) {
+            _processw.call(this);
+            self.emit('status', "connected");
+            _query.call(self, "volume", (err, val) => {
+                _query.call(self, "source", val => {
+                    _query.call(self, "mute", (err, val) => {
+                        self.emit('status', "connected");
                     });
                 });
             });
         } else {
-            _query.call(self, "START");
-            _query.call(self, "POWER");
-            setTimeout(opened, 500);
+            _query.call(self, "power");
+            _query.call(self, "power_on");
+            setTimeout(opened, 1000);
         }
     };
+
 
     this._port.on('open', err => {
         _processw.call(this);
@@ -166,4 +166,3 @@ DevialetExpert.prototype.stop = function() {
 };
 
 exports = module.exports = DevialetExpert;
-
