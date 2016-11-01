@@ -109,7 +109,6 @@ DevialetExpert.prototype.init = function(port, baud, cb) {
 
         if (self.properties.power) {
             _processw.call(this);
-            self.emit('status', "connected");
             _query.call(self, "volume", (err, val) => {
                 _query.call(self, "source", val => {
                     _query.call(self, "mute", (err, val) => {
