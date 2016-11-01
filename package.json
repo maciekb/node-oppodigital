@@ -6,6 +6,6 @@
   "author": "Christopher Rieke (based on Devialet by RoonLabs).",
   "license": "Apache-2.0",
   "dependencies": {
-    "node-serialport":              "github:EmergingTechnologyAdvisors/node-serialport"
+    "serialport": "^4.0.1"
   }
 }
