@@ -1,9 +1,9 @@
 {
-  "name": "node-rotel",
+  "name": "node-oppodigital",
   "version": "1.0.0",
-  "description": "Rotel Amp Device Control via RS232",
+  "description": "Oppo Digital Control via RS232",
   "main": "lib.js",
-  "author": "Christopher Rieke (based on Devialet Expert extension by RoonLabs).",
+  "author": "Maciej Biwejnis (based on Devialet Expert extension by RoonLabs).",
   "license": "Apache-2.0",
   "dependencies": {
     "serialport": "^4.0.1"
