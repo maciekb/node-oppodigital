@@ -27,33 +27,31 @@ let _processw = function() {
                     });
 }
 let _query = function(name, cb) {
-	var nicename = name;
-	if (name == "source"){var nicename = "get_current_source"};
-	if (name == "power"){var nicename = "get_current_power"};
-	if (name == "volume"){var nicename = "get_volume"};
-	if (name == "mute"){var nicename = "get_mute_status"};
-    this._qw.push(nicename + "!");
+    var nicename = name;
+    if (name == "source"){var nicename = "QIS"};
+    if (name == "power"){var nicename = "QPW"};
+    if (name == "volume"){var nicename = "QVL"};
+    this._qw.push("#" + nicename + "\r\n");
     if (cb) this._qr.push({ cb: cb, name: name });
     _processw.call(this);
 };
 
 let _send = function(name, val, cb) {
-	var nicename = name;
-	var seperator = "_";
+    var nicename = name;
+    var seperator = " ";
     if (nicename == "source" && val.length > 3 ) {nicename = ""; seperator = "";};
-    if (val == "standby" ) {val = "off";};
-    if (name == "mute" && val == "toggle" ) {val = ""; seperator = "";};
-    this._qw.push(nicename + seperator + val + "!");
+    if (val == "OFF" ) {val = "off";};
+//    if (name == "mute" && val == "toggle" ) {val = ""; seperator = "";};
+    this._qw.push("#" + nicename + seperator + val + "\r\n");
     _processw.call(this);
     console.log("Callback: ",cb);
     if (cb)
         this._qr.push({ cb: cb, name: name, ack: false });
 };
 
-RotelAmp.prototype.set_volume          = function(val, cb) { _send.call(this, "volume",          Number(val), cb); };
-RotelAmp.prototype.set_power           = function(val, cb) { _send.call(this, "power",           val,  cb); };
-RotelAmp.prototype.set_source          = function(val, cb) { _send.call(this, "source",          val, cb); };
-RotelAmp.prototype.set_mute            = function(val, cb) { _send.call(this, "mute",            val,  cb); };
+RotelAmp.prototype.set_volume          = function(val, cb) { _send.call(this, "SVL",          Number(val), cb); };
+RotelAmp.prototype.set_power           = function(val, cb) { _send.call(this, "PON",           val,  cb); };
+RotelAmp.prototype.set_source          = function(val, cb) { _send.call(this, "SIS",          val, cb); };
 
 RotelAmp.prototype.init = function(port, baud, cb) {
     let self = this;
@@ -66,29 +64,28 @@ RotelAmp.prototype.init = function(port, baud, cb) {
 
     this._port = new SerialPort(port, {
         baudRate: baud,
-        parser:   SerialPort.parsers.readline("!")
+        parser:   SerialPort.parsers.readline("\r")
     });
 
     this._port.on('data', data => {
-        if (data.substr(0,3) == "00:") {data = data.substr(3)};
+        if (data.substr(0,1) == "@") {data = data.substr(1)};
         console.log("Rotel RS232: read", data);
-        var re = /([^:=]+)[:=]([^\]]+)/.exec(data);
+        var re = /([\w]+)(?:[\s]+)?(?:[\w]+)?(?:[\s]+)([\w]+)/.exec(data);
         if (!re) {
-            console.error("Rotel RS232: unexpected data from serial port %s: %s", port, data);
+            console.error("Oppo Digital RS232: unexpected data from serial port %s: %s", port, data);
             return;
         }
 
         var d = {
             name: re[1],
-            prop: re[1].toLowerCase(),
+            prop: re[1],
             val:  re[2]
         };
 
-        if (d.val != "standby") {
-            if      (d.prop == "volume"         ) d.val = Number(d.val) ;
-            else if (d.prop == "power"          ) d.val = d.val == "on" ;
-            else if (d.prop == "mute"           ) d.val = d.val == "on" ;
-            else if (d.prop == "freq"           ) d.val = Number(d.val) ;
+        if (d.val != "OFF") {
+            if (d.prop == "QVL"         ) d.val = Number(d.val) ;
+            else if (d.prop == "QPW"          ) d.val = d.val == "ON" ;
+            else if (d.prop == "QIS"           ) d.val = Number(d.val) ;
 
             this.properties[d.prop] = d.val;
             this.emit("changed", d.prop, this.properties[d.prop]);
@@ -106,20 +103,20 @@ RotelAmp.prototype.init = function(port, baud, cb) {
 
     let opened = function() {
         if (!self._port) return;
-
-        if (self.properties.power) {
+        if (self.properties.QPW) {
             _processw.call(this);
-            _query.call(self, "volume", (err, val) => {
-                _query.call(self, "source", val => {
-                    _query.call(self, "mute", (err, val) => {
+            _query.call(self, "QPW", (err, val) => {
+                _query.call(self, "QIS", val => {
+                    _query.call(self, "QVL", (err, val) => {
                         self.emit('status', "connected");
                     });
                 });
             });
         } else {
-            _query.call(self, "power");
-            _query.call(self, "power_on");
-            setTimeout(opened, 1000);
+            _query.call(self, "QPW");
+            _query.call(self, "QVL");
+            _query.call(self, "QIS");
+            setTimeout(opened, 500);
         }
     };
 
