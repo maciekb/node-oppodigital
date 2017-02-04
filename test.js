@@ -10,4 +10,4 @@ d.on('changed', (n,v) => {
     console.log(n,v);
 });
 
-d.start("/dev/cu.usbserial", 115200);
+d.start("/dev/ttyUSB0", 9600);
